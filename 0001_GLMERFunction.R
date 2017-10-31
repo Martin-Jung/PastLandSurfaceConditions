@@ -144,3 +144,20 @@ fit_gamm4_mc = function(out, models, co) {
   stopCluster(cl); stopImplicitCluster() # Stop the cluster
   return(r)
 }
+
+# Extract coefficient function
+extractCoef <- function(mod,group){
+  # Extracts coefficients of with conditional variances from an lme4 object
+  # How to from Ben bolker
+  # http://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-from-lme
+  stopifnot(class(mod) =="lmerMod")
+  fixed.vars <- diag(vcov(mod))
+  ## extract variances of conditional modes
+  r1 <- ranef(mod,condVar=TRUE)
+  cmode.vars <- t(apply(cv <- attr(r1[[1]],"postVar"),3,diag))
+  seVals <- sqrt(sweep(cmode.vars,2,fixed.vars,"+"))
+  res <- cbind(coef(mod)[[group]],seVals)
+  res2 <- setNames(res[,c(1,3,2,4)],
+                   c("int","int_se","slope","slope_se"))
+  return(res2)
+}
