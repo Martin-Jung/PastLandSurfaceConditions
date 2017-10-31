@@ -112,3 +112,35 @@ maxcorr.mer <- function (fit,
     zapsmall(minCor)
   }
 }
+
+fit_glmer_mc = function(out, models, co) {
+  library(doParallel)
+  cl <- makeCluster(co)
+  registerDoParallel(cl) # Do a parallel cluster of co cores
+  #if (is.data.frame(data)) 
+  #  data = replicate(length(calls), data, simplify = F)
+  r <- foreach(i= 1:length(models), .packages=c("lme4"),.errorhandling = "pass") %do% {
+    mod <- try( eval(parse(text = models[i])),silent = T) 
+    if(class(mod)=="try-error") mod <- NA
+    return(mod)
+  }
+  stopCluster(cl); stopImplicitCluster() # Stop the cluster
+  return(r)
+}
+
+fit_gamm4_mc = function(out, models, co) {
+  library(doParallel)
+  cl <- makeCluster(co)
+  registerDoParallel(cl) # Do a parallel cluster of co cores
+  #if (is.data.frame(data)) 
+  #  data = replicate(length(calls), data, simplify = F)
+  r <- foreach(i= 1:length(models), .packages=c("gamm4"),.errorhandling = "pass") %do% {
+    mod <- try( eval(parse(text = models[i])),silent = T) 
+    if(class(mod)=="try-error") mod <- NA else
+      b <- summary(mod$gam)
+    mod <- b$r.sq
+    return(mod)
+  }
+  stopCluster(cl); stopImplicitCluster() # Stop the cluster
+  return(r)
+}
